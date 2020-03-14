@@ -1,0 +1,79 @@
+﻿@page "/users"
+@using TableSoccer.Shared
+@inject HttpClient Http
+@inject IJSRuntime JsRuntime
+
+<h1>Users</h1>
+
+<h2>New User</h2>
+<EditForm Model="@NewUser" OnValidSubmit="@AddUserAsync">
+	<div class="form-group">
+		<label>
+			Name:
+			<InputText class="form-control" @bind-Value="@NewUser.Name" />
+		</label>
+	</div>
+	<button class="btn btn-primary" type="submit">Add</button>
+</EditForm>
+
+<h2>All Users</h2>
+@if (AllUsers == null)
+{
+	<p><em>Loading...</em></p>
+}
+else
+{
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Score</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var user in AllUsers)
+			{
+				<tr>
+					<td>@user.Name</td>
+					<td>@user.Score</td>
+					<td><button @onclick="(() => DeleteUserAsync(user.Id))">x</button></td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+@code {
+	private List<User> AllUsers { get; set; }
+	private User NewUser { get; set; } = new User();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadUsersAsync();
+	}
+
+	async Task LoadUsersAsync()
+	{
+		AllUsers = await Http.GetJsonAsync<List<User>>("User");
+	}
+
+	async Task AddUserAsync()
+	{
+		await Http.PostJsonAsync("User", NewUser);
+		await LoadUsersAsync();
+		NewUser = new User();
+	}
+
+	async Task DeleteUserAsync(long userId)
+	{
+		var promptResult = await JsRuntime.InvokeAsync<bool>("confirm", "Do really you want to delete this user?");
+		if (!promptResult)
+		{
+			return;
+		}
+
+		await Http.DeleteAsync($"User?userId={userId}");
+		await LoadUsersAsync();
+	}
+}
