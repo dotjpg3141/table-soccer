@@ -3,7 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using TableSoccer.Server.Models;
+using TableSoccer.Server.Database;
 
 namespace TableSoccer.Server.Migrations
 {

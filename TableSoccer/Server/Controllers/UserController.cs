@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using TableSoccer.Server.Models;
+using TableSoccer.Server.Database;
 using TableSoccer.Shared.Models;
 
 namespace TableSoccer.Server.Controllers
@@ -21,15 +20,15 @@ namespace TableSoccer.Server.Controllers
 		[HttpGet]
 		public IEnumerable<User> Get()
 		{
-			return Context.Users.OrderByDescending(user => user.Score);
+			var dao = new UserDao(Context);
+			return dao.GetAll();
 		}
 
 		[HttpPost]
 		public IActionResult Post(User user)
 		{
-			user.Score = 1000;
-			user.CreationDate = DateTime.Now;
-			Context.Users.Add(user);
+			var dao = new UserDao(Context);
+			dao.Add(user);
 			Context.SaveChanges();
 			return Ok();
 		}
@@ -37,15 +36,9 @@ namespace TableSoccer.Server.Controllers
 		[HttpDelete]
 		public IActionResult Delete(int userId)
 		{
-			var user = Context.Users.Find(userId);
-			if (user == null)
-			{
-				return NotFound();
-			}
-
-			Context.Users.Remove(user);
+			var dao = new UserDao(Context);
+			dao.Remove(userId);
 			Context.SaveChanges();
-
 			return Ok();
 		}
 	}

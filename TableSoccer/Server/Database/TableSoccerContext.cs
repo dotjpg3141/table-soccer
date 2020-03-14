@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using TableSoccer.Shared.Models;
 
-namespace TableSoccer.Server.Models
+namespace TableSoccer.Server.Database
 {
 	public class TableSoccerContext : DbContext
 	{
