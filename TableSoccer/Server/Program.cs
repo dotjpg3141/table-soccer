@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using TableSoccer.Server.Models;
 
 namespace TableSoccer.Server
 {
@@ -13,6 +13,9 @@ namespace TableSoccer.Server
 	{
 		public static void Main(string[] args)
 		{
+			var forceMigration = args.Contains("--force-migration", StringComparer.InvariantCultureIgnoreCase);
+			MigrateDatabase(forceMigration);
+
 			CreateHostBuilder(args).Build().Run();
 		}
 
@@ -22,5 +25,20 @@ namespace TableSoccer.Server
 				{
 					webBuilder.UseStartup<Startup>();
 				});
+
+		private static void MigrateDatabase(bool force)
+		{
+			if (!force && File.Exists(TableSoccerContext.fileName))
+			{
+				return;
+			}
+
+			Console.WriteLine("Migrating database");
+
+			using (var context = new TableSoccerContext())
+			{
+				context.Database.Migrate();
+			}
+		}
 	}
 }
