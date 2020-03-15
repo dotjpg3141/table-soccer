@@ -1,5 +1,4 @@
 ﻿@page "/users"
-@using TableSoccer.Shared.Models
 @inject HttpClient Http
 @inject IJSRuntime JsRuntime
 
@@ -37,7 +36,7 @@ else
 				<tr>
 					<td>@user.Name</td>
 					<td>@user.Score</td>
-					<td><button @onclick="(() => DeleteUserAsync(user.Id))">x</button></td>
+					<td><button @onclick="(() => DeleteUserAsync(user.UserId))">x</button></td>
 				</tr>
 			}
 		</tbody>

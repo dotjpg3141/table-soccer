@@ -1,0 +1,112 @@
+﻿@page "/matches"
+@inject HttpClient Http
+
+<h1>Matches</h1>
+
+<h2>New Match</h2>
+<EditForm Model="@CurrentMatch" OnValidSubmit="AddMatchAsync">
+
+	@foreach (var team in CurrentMatch.Teams)
+	{
+		if (UserLookup == null)
+		{
+			<p><em>Loading users...</em></p>
+			continue;
+		}
+
+		<div class="form-group">
+			@foreach (var (index, member) in team.TeamMembers.Enumerate())
+			{
+					<label class="form-group">
+						Team @team.Name - User @(index + 1)
+
+						<InputSelectNumber class="form-control" @bind-Value="member.UserId">
+							@foreach (var user in UserLookup)
+							{
+								<option value="@user.Key">@user.Value</option>
+							}
+						</InputSelectNumber>
+					</label>
+			}
+		</div>
+	}
+
+	@foreach (var team in CurrentMatch.Teams)
+	{
+		<label class="form-group">
+			Team @team.Name - Result
+			<InputNumber class="form-control" @bind-Value="@team.Result" />
+		</label>
+	}
+
+	<button class="btn btn-primary" type="submit">Add</button>
+</EditForm>
+
+<h2>All Matches</h2>
+@if (AllMatches == null)
+{
+	<p><em>Loading matches...</em></p>
+}
+else
+{
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Team A</th>
+				<th>Team B</th>
+				<th>Result</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var match in AllMatches)
+			{
+				var teamA = match.Teams.ElementAt(0);
+				var teamB = match.Teams.ElementAt(1);
+
+				<tr>
+					<td>@(string.Join(", ", teamA.TeamMembers.Select(member => member.User.Name)))</td>
+					<td>@(string.Join(", ", teamB.TeamMembers.Select(member => member.User.Name)))</td>
+					<td>@teamA.Result - @teamB.Result</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+@code {
+	private List<Match> AllMatches { get; set; }
+	private List<KeyValuePair<long, string>> UserLookup { get; set; }
+	private Match CurrentMatch { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		ResetMatch();
+		await Task.WhenAll(
+			LoadMatchesAsync(),
+			LoadUserLookupAsync()
+		);
+	}
+
+	void ResetMatch()
+	{
+		var teamA = new Team() { Position = 0, TeamMembers = new List<TeamMember>() { new TeamMember() } };
+		var teamB = new Team() { Position = 1, TeamMembers = new List<TeamMember>() { new TeamMember() } };
+		CurrentMatch = new Match() { Teams = new[] { teamA, teamB } };
+	}
+
+	async Task LoadMatchesAsync()
+	{
+		AllMatches = await Http.GetJsonAsync<List<Match>>("Match");
+	}
+
+	async Task LoadUserLookupAsync() {
+		UserLookup = await Http.GetJsonAsync<List<KeyValuePair<long, string>>>("User/Lookup");
+	}
+
+	async Task AddMatchAsync()
+	{
+		await Http.PostJsonAsync("Match", CurrentMatch);
+		await LoadMatchesAsync();
+		ResetMatch();
+	}
+}

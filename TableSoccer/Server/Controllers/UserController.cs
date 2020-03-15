@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using TableSoccer.Server.Database;
 using TableSoccer.Shared.Models;
@@ -22,6 +23,14 @@ namespace TableSoccer.Server.Controllers
 		{
 			var dao = new UserDao(Context);
 			return dao.GetAll();
+		}
+
+		[HttpGet("lookup")]
+		public IEnumerable<KeyValuePair<long, string>> Lookup()
+		{
+			// TODO(jpg): proper lookup type
+			var dao = new UserDao(Context);
+			return dao.GetAll().Select(user => KeyValuePair.Create(user.UserId, user.Name)).ToList();
 		}
 
 		[HttpPost]

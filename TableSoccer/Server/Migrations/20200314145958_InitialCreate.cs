@@ -11,7 +11,7 @@ namespace TableSoccer.Server.Migrations
 				name: "Users",
 				columns: table => new
 				{
-					Id = table.Column<int>(nullable: false)
+					UserId = table.Column<int>(nullable: false)
 						.Annotation("Sqlite:Autoincrement", true),
 					Name = table.Column<string>(nullable: true),
 					Score = table.Column<int>(nullable: false),
@@ -19,7 +19,7 @@ namespace TableSoccer.Server.Migrations
 				},
 				constraints: table =>
 				{
-					table.PrimaryKey("PK_Users", x => x.Id);
+					table.PrimaryKey("PK_Users", x => x.UserId);
 				});
 		}
 
