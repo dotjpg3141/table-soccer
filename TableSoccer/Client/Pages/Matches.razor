@@ -11,6 +11,8 @@
 	<ObjectGraphDataAnnotationsValidator />
 	<ValidationSummary />
 
+	<button type="button" @onclick="ShuffleTeams">🎲</button>
+
 	@foreach (var team in CurrentMatch.Teams)
 	{
 		if (UserLookup == null)
@@ -42,7 +44,7 @@
 
 			@if (team.TeamMembers.Count < MaxTeamMemberCount)
 			{
-				<button type="button" @onclick="(() => AddTeamMember(team))">+</button>
+				<button type="button" @onclick="(() => AddEmptyTeamMember(team))">+</button>
 			}
 		</div>
 	}
@@ -114,8 +116,8 @@ else
 		var teamA = new Team() { Position = 0, TeamMembers = new List<TeamMember>() { } };
 		var teamB = new Team() { Position = 1, TeamMembers = new List<TeamMember>() { } };
 
-		AddTeamMember(teamA);
-		AddTeamMember(teamB);
+		AddEmptyTeamMember(teamA);
+		AddEmptyTeamMember(teamB);
 
 		CurrentMatch = new Match() { Teams = new[] { teamA, teamB } };
 	}
@@ -186,7 +188,7 @@ else
 		ResetMatch();
 	}
 
-	void AddTeamMember(Team team)
+	void AddEmptyTeamMember(Team team)
 	{
 		team.TeamMembers.Add(new TeamMember());
 	}
@@ -194,5 +196,38 @@ else
 	void RemoveTeamMember(Team team, TeamMember member)
 	{
 		team.TeamMembers.Remove(member);
+	}
+
+	void ShuffleTeams()
+	{
+		var members = (from team in CurrentMatch.Teams
+					   from member in team.TeamMembers
+					   where member.UserId != 0
+					   select member).ToList();
+
+		foreach (var team in CurrentMatch.Teams)
+		{
+			team.TeamMembers.Clear();
+		}
+
+		var random = new Random();
+		members.Shuffle(random);
+
+		var teamInsertionOrder = CurrentMatch.Teams.ToList();
+		teamInsertionOrder.Shuffle(random);
+
+		var memberIterator = members.GetEnumerator();
+		while (true)
+		{
+			foreach (var team in teamInsertionOrder)
+			{
+				if (!memberIterator.MoveNext())
+				{
+					return;
+				}
+
+				team.TeamMembers.Add(memberIterator.Current);
+			}
+		}
 	}
 }
