@@ -1,4 +1,5 @@
-﻿@page "/matches"
+﻿@page "/"
+@page "/matches"
 @inject HttpClient Http
 
 <h1>Matches</h1>
@@ -17,16 +18,16 @@
 		<div class="form-group">
 			@foreach (var (index, member) in team.TeamMembers.Enumerate())
 			{
-					<label class="form-group">
-						Team @team.Name - User @(index + 1)
+				<label class="form-group">
+					Team @team.Name - User @(index + 1)
 
-						<InputSelectNumber class="form-control" @bind-Value="member.UserId">
-							@foreach (var user in UserLookup)
-							{
-								<option value="@user.Key">@user.Value</option>
-							}
-						</InputSelectNumber>
-					</label>
+					<InputSelectNumber class="form-control" @bind-Value="member.UserId">
+						@foreach (var user in UserLookup)
+						{
+							<option value="@user.Key">@user.Value</option>
+						}
+					</InputSelectNumber>
+				</label>
 			}
 		</div>
 	}
@@ -99,7 +100,8 @@ else
 		AllMatches = await Http.GetJsonAsync<List<Match>>("Match");
 	}
 
-	async Task LoadUserLookupAsync() {
+	async Task LoadUserLookupAsync()
+	{
 		UserLookup = await Http.GetJsonAsync<List<KeyValuePair<long, string>>>("User/Lookup");
 	}
 
