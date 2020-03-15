@@ -15,6 +15,7 @@ namespace TableSoccer.Shared.Models
 
 		public int Position { get; set; }
 
+		[Range(0.0, double.PositiveInfinity, ErrorMessage = "Non-negative scores required")]
 		public int Result { get; set; }
 
 		[ForeignKey("MatchId")]
@@ -23,6 +24,7 @@ namespace TableSoccer.Shared.Models
 
 		[InverseProperty("Team")]
 		[CollectionCount(MinCount = 1)]
+		[ValidateComplexType]
 		public virtual ICollection<TeamMember> TeamMembers { get; set; } = new HashSet<TeamMember>();
 
 		[NotMapped]

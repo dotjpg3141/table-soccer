@@ -6,6 +6,9 @@
 
 <h2>New User</h2>
 <EditForm Model="@NewUser" OnValidSubmit="@AddUserAsync">
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+
 	<div class="form-group">
 		<label>
 			Name:

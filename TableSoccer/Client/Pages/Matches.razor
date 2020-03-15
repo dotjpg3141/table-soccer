@@ -1,11 +1,15 @@
 ﻿@page "/"
 @page "/matches"
+@using System.Text;
 @inject HttpClient Http
+@inject IJSRuntime JsRuntime
 
 <h1>Matches</h1>
 
 <h2>New Match</h2>
 <EditForm Model="@CurrentMatch" OnValidSubmit="AddMatchAsync">
+	<ObjectGraphDataAnnotationsValidator />
+	<ValidationSummary />
 
 	@foreach (var team in CurrentMatch.Teams)
 	{
@@ -16,10 +20,16 @@
 		}
 
 		<div class="form-group">
+			<label>Team @team.Name:</label>
 			@foreach (var (index, member) in team.TeamMembers.Enumerate())
 			{
 				<label class="form-group">
-					Team @team.Name - User @(index + 1)
+					User @(index + 1)
+
+					@if (team.TeamMembers.Count > MinTeamMemberCount)
+					{
+						<button type="button" @onclick="@(() => RemoveTeamMember(team, member))">x</button>
+					}
 
 					<InputSelectNumber class="form-control" @bind-Value="member.UserId">
 						@foreach (var user in UserLookup)
@@ -29,16 +39,23 @@
 					</InputSelectNumber>
 				</label>
 			}
+
+			@if (team.TeamMembers.Count < MaxTeamMemberCount)
+			{
+				<button type="button" @onclick="(() => AddTeamMember(team))">+</button>
+			}
 		</div>
 	}
 
-	@foreach (var team in CurrentMatch.Teams)
-	{
-		<label class="form-group">
-			Team @team.Name - Result
-			<InputNumber class="form-control" @bind-Value="@team.Result" />
-		</label>
-	}
+	<div class="form-group">
+		@foreach (var team in CurrentMatch.Teams)
+		{
+			<label>
+				Team @team.Name
+				<InputNumber class="form-control" @bind-Value="@team.Result" />
+			</label>
+		}
+	</div>
 
 	<button class="btn btn-primary" type="submit">Add</button>
 </EditForm>
@@ -75,6 +92,10 @@ else
 }
 
 @code {
+	private const int MinTeamMemberCount = 1;
+	private const int MaxTeamMemberCount = 4;
+	private const int MaxPoints = 10;
+
 	private List<Match> AllMatches { get; set; }
 	private List<KeyValuePair<long, string>> UserLookup { get; set; }
 	private Match CurrentMatch { get; set; }
@@ -90,8 +111,12 @@ else
 
 	void ResetMatch()
 	{
-		var teamA = new Team() { Position = 0, TeamMembers = new List<TeamMember>() { new TeamMember() } };
-		var teamB = new Team() { Position = 1, TeamMembers = new List<TeamMember>() { new TeamMember() } };
+		var teamA = new Team() { Position = 0, TeamMembers = new List<TeamMember>() { } };
+		var teamB = new Team() { Position = 1, TeamMembers = new List<TeamMember>() { } };
+
+		AddTeamMember(teamA);
+		AddTeamMember(teamB);
+
 		CurrentMatch = new Match() { Teams = new[] { teamA, teamB } };
 	}
 
@@ -107,8 +132,67 @@ else
 
 	async Task AddMatchAsync()
 	{
+		var warnings = new Lazy<StringBuilder>(() =>
+		{
+			var sb = new StringBuilder();
+			sb.AppendLine("Warning!");
+			sb.AppendLine();
+			return sb;
+		});
+
+		switch (CurrentMatch.Teams.Count(team => team.Result >= MaxPoints))
+		{
+			case 0:
+				warnings.Value.AppendLine($"No team reached {MaxPoints}.");
+				break;
+
+			case 1:
+				break;
+
+			case var count:
+				warnings.Value.AppendLine($"{count} teams reached {MaxPoints} points.");
+				break;
+		}
+
+		if (CurrentMatch.Teams.All(team => team.Result == 0))
+		{
+			warnings.Value.AppendLine("No team scored any points.");
+		}
+
+		foreach (var team in CurrentMatch.Teams)
+		{
+			if (team.Result <= MaxPoints)
+			{
+				continue;
+			}
+
+			warnings.Value.AppendLine($"Team {team.Name} scored more than {MaxPoints} points.");
+		}
+
+		if (warnings.IsValueCreated)
+		{
+			warnings.Value.AppendLine();
+			warnings.Value.AppendLine("Add match regardless?");
+
+			var promptResult = await JsRuntime.InvokeAsync<bool>("confirm", warnings.Value.ToString());
+			if (!promptResult)
+			{
+				return;
+			}
+		}
+
 		await Http.PostJsonAsync("Match", CurrentMatch);
 		await LoadMatchesAsync();
 		ResetMatch();
+	}
+
+	void AddTeamMember(Team team)
+	{
+		team.TeamMembers.Add(new TeamMember());
+	}
+
+	void RemoveTeamMember(Team team, TeamMember member)
+	{
+		team.TeamMembers.Remove(member);
 	}
 }

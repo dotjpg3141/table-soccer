@@ -39,6 +39,11 @@ namespace TableSoccer.Server.Database
 		{
 			match.Time = DateTime.Now;
 
+			foreach (var (index, team) in match.Teams.OrderBy(team => team.Position).Enumerate())
+			{
+				team.Position = index;
+			}
+
 			Context.Matches.Add(match);
 		}
 	}
